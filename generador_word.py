@@ -1,88 +1,93 @@
-import os
 from docx import Document
 from docx.shared import Cm
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+import os
 from utils import limpiar_valor, limpiar_nombre_archivo
 
 
-def establecer_ancho_columnas(tabla, anchos):
-    for fila in tabla.rows:
-        for idx, ancho in enumerate(anchos):
-            fila.cells[idx].width = ancho
+def generar_informes(df, carpeta, barra, estado):
 
+    if not os.path.exists(carpeta):
+        os.makedirs(carpeta)
 
-def generar_informes(df, carpeta_salida, barra, estado):
+    col_region = "Indique su región"
+    col_deprov = "DEPROV"
+    col_modalidad = "MODALIDAD"
 
-    if not os.path.exists(carpeta_salida):
-        os.makedirs(carpeta_salida)
+    grupos = df.groupby([col_region, col_deprov, col_modalidad])
 
-    total = len(df)
+    total = len(grupos)
     contador = 0
 
-    for _, row in df.iterrows():
+    for (region, deprov, modalidad), datos_grupo in grupos:
 
         doc = Document()
 
         doc.add_picture("logo_mineduc.png", width=Cm(4))
 
         titulo = doc.add_heading(
-            "Informe de Planificación de Asesoría Ministerial", level=0
+            "Informe de Planificación de Asesoría Ministerial",
+            level=0
         )
+
         titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
-        tabla_header = doc.add_table(rows=4, cols=2)
-        tabla_header.style = "Table Grid"
+        doc.add_paragraph()
 
-        datos = [
-            ("Nombre", limpiar_valor(row.get("Nombre"))),
-            ("Correo", limpiar_valor(row.get("Correo electrónico"))),
-            ("Región", limpiar_valor(row.get("Indique su región"))),
-            ("Hora envío", limpiar_valor(row.get("Hora de finalización"))),
-        ]
-
-        for i, (campo, valor) in enumerate(datos):
-
-            c1 = tabla_header.cell(i, 0)
-            c2 = tabla_header.cell(i, 1)
-
-            c1.text = campo
-            c1.paragraphs[0].runs[0].bold = True
-            c2.text = valor
-
-        establecer_ancho_columnas(tabla_header, [Cm(6), Cm(10)])
-
-        doc.add_heading("Detalle de la planificación", level=1)
-
-        tabla = doc.add_table(rows=0, cols=2)
+        tabla = doc.add_table(rows=3, cols=2)
         tabla.style = "Table Grid"
 
-        for col in df.columns:
+        tabla.cell(0,0).text="Región"
+        tabla.cell(0,1).text=limpiar_valor(region)
 
-            if col in ["ID"]:
-                continue
+        tabla.cell(1,0).text="DEPROV"
+        tabla.cell(1,1).text=limpiar_valor(deprov)
 
-            valor = limpiar_valor(row[col])
+        tabla.cell(2,0).text="Modalidad"
+        tabla.cell(2,1).text=limpiar_valor(modalidad)
 
-            fila = tabla.add_row()
+        doc.add_heading(
+            f"Profesionales incluidos ({len(datos_grupo)})",
+            level=1
+        )
 
-            c1 = fila.cells[0]
-            c2 = fila.cells[1]
+        for _, row in datos_grupo.iterrows():
 
-            c1.text = str(col)
-            c1.paragraphs[0].runs[0].bold = True
+            nombre = limpiar_valor(row.get("Nombre"))
+            correo = limpiar_valor(row.get("Correo electrónico"))
 
-            c2.text = valor
+            doc.add_heading(nombre, level=2)
 
-        establecer_ancho_columnas(tabla, [Cm(6), Cm(10)])
+            tabla_persona = doc.add_table(rows=0, cols=2)
+            tabla_persona.style = "Table Grid"
 
-        nombre_archivo = f"Informe_{limpiar_nombre_archivo(row.get('Nombre','Funcionario'))}.docx"
+            for col in df.columns:
 
-        ruta = os.path.join(carpeta_salida, nombre_archivo)
+                if col in ["ID"]:
+                    continue
+
+                valor = limpiar_valor(row[col])
+
+                fila = tabla_persona.add_row()
+
+                c1 = fila.cells[0]
+                c2 = fila.cells[1]
+
+                c1.text = col
+                c1.paragraphs[0].runs[0].bold = True
+
+                c2.text = valor
+
+        nombre_archivo = f"Informe_{limpiar_nombre_archivo(region)}_{limpiar_nombre_archivo(deprov)}_{limpiar_nombre_archivo(modalidad)}.docx"
+
+        ruta = os.path.join(carpeta, nombre_archivo)
 
         doc.save(ruta)
 
         contador += 1
 
-        progreso = contador / total
-        barra.progress(progreso)
-        estado.text(f"Generando informe {contador} de {total}")
+        barra.progress(contador/total)
+
+        estado.text(
+            f"Generando informe {contador} de {total}"
+        )
