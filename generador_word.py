@@ -10,11 +10,7 @@ def generar_informes(df, carpeta, barra, estado):
     if not os.path.exists(carpeta):
         os.makedirs(carpeta)
 
-    col_region = "Indique su región"
-    col_deprov = "DEPROV"
-    col_modalidad = "MODALIDAD"
-
-    grupos = df.groupby([col_region, col_deprov, col_modalidad])
+    grupos = df.groupby(["Indique su región", "DEPROV", "MODALIDAD"])
 
     total = len(grupos)
     contador = 0

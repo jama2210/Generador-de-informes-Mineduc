@@ -2,9 +2,10 @@ import streamlit as st
 import pandas as pd
 import os
 import zipfile
+from utils import obtener_deprov, obtener_modalidad, validar_columnas
 
 from generador_word import generar_informes
-from utils import validar_columnas
+
 
 st.set_page_config(
     page_title="Plataforma de Informes MINEDUC",
@@ -91,6 +92,11 @@ if archivo:
     # -------------------------
     # ESTADÍSTICAS DEL EXCEL
     # -------------------------
+
+    # Agregar columnas dinámicas antes de generar informes
+    df["DEPROV"] = df.apply(obtener_deprov, axis=1)
+
+    df["MODALIDAD"] = df.apply(lambda row: obtener_modalidad(row, row["DEPROV"]), axis=1)
 
     st.subheader("Resumen del archivo")
 
