@@ -10,7 +10,7 @@ def generar_informes(df, carpeta, barra, estado):
     if not os.path.exists(carpeta):
         os.makedirs(carpeta)
 
-    grupos = df.groupby(["Indique su región", "DEPROV", "MODALIDAD"])
+    grupos = df.groupby(["Indique su región", "Deprov", "Tipo Asesoría"])
 
     total = len(grupos)
     contador = 0
@@ -47,6 +47,8 @@ def generar_informes(df, carpeta, barra, estado):
             level=1
         )
 
+        datos_grupo = datos_grupo.sort_values("Nombre")
+
         for _, row in datos_grupo.iterrows():
 
             nombre = limpiar_valor(row.get("Nombre"))
@@ -57,9 +59,15 @@ def generar_informes(df, carpeta, barra, estado):
             tabla_persona = doc.add_table(rows=0, cols=2)
             tabla_persona.style = "Table Grid"
 
+            columnas_ignorar = [
+                "ID",
+                "Hora de inicio",
+                "Hora de finalización"
+            ]
+
             for col in df.columns:
 
-                if col in ["ID"]:
+                if col in columnas_ignorar:
                     continue
 
                 valor = limpiar_valor(row[col])

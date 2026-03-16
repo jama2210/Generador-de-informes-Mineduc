@@ -42,7 +42,7 @@ font-weight:bold;
 
 col1,col2=st.columns([1,4])
 
-with col1:
+with col1: 
     st.image("logo_mineduc.png", width=140)
 
 with col2:
@@ -75,7 +75,9 @@ if archivo:
     columnas_clave = [
         "Nombre",
         "Correo electrónico",
-        "Indique su región"
+        "Indique su región",
+        "Deprov",
+        "Tipo Asesoría"
     ]
 
     faltantes = validar_columnas(df,columnas_clave)
@@ -93,10 +95,8 @@ if archivo:
     # ESTADÍSTICAS DEL EXCEL
     # -------------------------
 
-    # Agregar columnas dinámicas antes de generar informes
-    df["DEPROV"] = df.apply(obtener_deprov, axis=1)
-
-    df["MODALIDAD"] = df.apply(lambda row: obtener_modalidad(row, row["DEPROV"]), axis=1)
+    df["DEPROV"] = df["Deprov"]
+    df["MODALIDAD"] = df["Tipo Asesoría"]
 
     st.subheader("Resumen del archivo")
 
