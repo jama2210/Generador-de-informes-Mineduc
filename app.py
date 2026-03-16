@@ -2,8 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 import zipfile
-from utils import obtener_deprov, obtener_modalidad, validar_columnas
-
+from utils import validar_columnas
 from generador_word import generar_informes
 
 
