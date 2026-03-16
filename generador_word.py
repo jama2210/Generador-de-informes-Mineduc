@@ -65,7 +65,7 @@ def generar_informes(df, carpeta, barra, estado):
                 "Hora de finalización"
             ]
 
-            for col in df.columns:
+            for col in datos_grupo.columns:
 
                 if col in columnas_ignorar:
                     continue
