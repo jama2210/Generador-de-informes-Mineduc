@@ -113,6 +113,15 @@ if archivo:
     # -------------------------
     # GENERAR INFORMES
     # -------------------------
+    
+    modo = st.selectbox(
+        "Seleccione cómo desea generar los informes:",
+        [
+            "1 informe por Región / Deprov / Modalidad",
+            "2 informe por Profesional"
+        ]
+    )
+
 
     if st.button("Generar Informes"):
 
@@ -127,7 +136,7 @@ if archivo:
         estado = st.empty()
 
         # ✅ Generar informes con estructura en subcarpetas
-        generar_informes(df, base_carpeta, progreso, estado)
+        generar_informes(df, base_carpeta, progreso, estado, modo)
 
         # ✅ Crear nombre único para el ZIP
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
