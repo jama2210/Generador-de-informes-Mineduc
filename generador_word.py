@@ -152,13 +152,13 @@ def generar_informes(df, carpeta, barra, estado, modo):
 
                 # Ordenar registros por Nombre Asesoría si existe
                 if "Nombre Asesoría" in datos_persona.columns:
-                    datos_persona = datos_persona.sort_values("Nombre Asesoría")
+                    datos_persona = datos_persona.sort_values("Nombre RBD, RED, Sostenedor")
 
-                # ✅ Iterar cada uno de los registros del profesional (MUY IMPORTANTE)
+                # Iterar cada uno de los registros del profesional (MUY IMPORTANTE)
                 for _, fila_persona in datos_persona.iterrows():
 
                     nombre_asesoria = limpiar_valor(
-                        fila_persona.get("Nombre Asesoría", "Registro")
+                        fila_persona.get("Nombre RBD, RED, Sostenedor", "Registro")
                     )
 
                     doc.add_heading(
