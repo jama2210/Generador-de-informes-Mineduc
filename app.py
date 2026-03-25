@@ -142,28 +142,57 @@ if archivo:
         progreso = st.progress(0)
         estado = st.empty()
 
+        # --------------------------------------------------------------------
+        # ✅ VARIANTE C — SOLO GENERA 1 INFORME → DESCARGA DIRECTAMENTE DOCX
+        # --------------------------------------------------------------------
         if modo == "Generación personalizada (Variante C)":
+
+            # Filtrar solo al profesional seleccionado
             df_final = df_m[df_m["Nombre"] == profesional_sel]
+
+            # Generación normal usando Variante B internamente
             generar_informes(df_final, base_carpeta, progreso, estado, "Variante B")
+
+            # Obtener el único archivo generado
+            archivo_final = None
+            for root, _, files in os.walk(base_carpeta):
+                for file in files:
+                    if file.endswith(".docx"):
+                        archivo_final = os.path.join(root, file)
+
+            if archivo_final:
+                st.success("Informe personalizado generado correctamente")
+
+                with open(archivo_final, "rb") as f:
+                    st.download_button(
+                        "Descargar Informe (.docx)",
+                        f,
+                        file_name=os.path.basename(archivo_final)
+                    )
+
+            st.stop()  # ✅ Evita que siga al ZIP
+
+        # --------------------------------------------------------------------
+        # ✅ VARIANTES A y B → siguen generando un ZIP
+        # --------------------------------------------------------------------
         else:
             generar_informes(df, base_carpeta, progreso, estado, modo)
 
-        # ✅ generar zip
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        zip_nombre = f"informes_generados_{timestamp}.zip"
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            zip_nombre = f"informes_generados_{timestamp}.zip"
 
-        with zipfile.ZipFile(zip_nombre, "w") as zipf:
-            for root, _, files in os.walk(base_carpeta):
-                for file in files:
-                    full_path = os.path.join(root, file)
-                    arcname = os.path.relpath(full_path, base_carpeta)
-                    zipf.write(full_path, arcname)
+            with zipfile.ZipFile(zip_nombre, "w") as zipf:
+                for root, _, files in os.walk(base_carpeta):
+                    for file in files:
+                        full_path = os.path.join(root, file)
+                        arcname = os.path.relpath(full_path, base_carpeta)
+                        zipf.write(full_path, arcname)
 
-        st.success("Informes generados correctamente")
+            st.success("Informes generados correctamente")
 
-        with open(zip_nombre, "rb") as f:
-            st.download_button(
-                "Descargar ZIP de Informes",
-                f,
-                file_name=zip_nombre
-            )
+            with open(zip_nombre, "rb") as f:
+                st.download_button(
+                    "Descargar ZIP de Informes",
+                    f,
+                    file_name=zip_nombre
+                )
