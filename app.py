@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import os
@@ -9,23 +8,19 @@ import datetime
 from utils import validar_columnas
 from generador_word import generar_informes
 
+
 st.set_page_config(
     page_title="Plataforma de Informes MINEDUC",
     layout="wide"
 )
 
-# -------------------------
-# ESTILO
-# -------------------------
-
+# ---------------------------------------
+# ESTILO VISUAL
+# ---------------------------------------
 st.markdown("""
 <style>
-.stApp {
-    background-color:#f4f6f8;
-}
-h1,h2,h3{
-    color:#003366;
-}
+.stApp { background-color:#f4f6f8; }
+h1,h2,h3 { color:#003366; }
 .stButton>button{
     background-color:#d52b1e;
     color:white;
@@ -34,10 +29,9 @@ h1,h2,h3{
 </style>
 """, unsafe_allow_html=True)
 
-# -------------------------
-# HEADER
-# -------------------------
-
+# ---------------------------------------
+# ENCABEZADO
+# ---------------------------------------
 col1, col2 = st.columns([1,4])
 
 with col1:
@@ -49,10 +43,9 @@ with col2:
 
 st.divider()
 
-# -------------------------
-# CARGA DE ARCHIVO
-# -------------------------
-
+# ---------------------------------------
+# SUBIR ARCHIVO
+# ---------------------------------------
 archivo = st.file_uploader(
     "Suba el archivo Excel generado desde el formulario",
     type=["xlsx"]
@@ -62,12 +55,8 @@ if archivo:
 
     df = pd.read_excel(archivo)
 
-    st.subheader("Vista previa de datos")
+    st.subheader("Vista previa")
     st.dataframe(df.head())
-
-    # -------------------------
-    # VALIDACIÓN
-    # -------------------------
 
     columnas_clave = [
         "Nombre",
@@ -78,56 +67,74 @@ if archivo:
     ]
 
     faltantes = validar_columnas(df, columnas_clave)
-
     if faltantes:
         st.error("Faltan columnas obligatorias:")
         for c in faltantes:
             st.write("-", c)
         st.stop()
 
-    # -------------------------
-    # ESTADÍSTICAS
-    # -------------------------
-
-    df["DEPROV"] = df["Deprov"]
-    df["MODALIDAD"] = df["Tipo Asesoría"]
-
+    # ---------------------------------------
+    # RESUMEN
+    # ---------------------------------------
     st.subheader("Resumen del archivo")
 
     col1, col2, col3, col4 = st.columns(4)
 
-    with col1:
-        st.metric("Total registros", len(df))
+    df["DEPROV"] = df["Deprov"]
+    df["MODALIDAD"] = df["Tipo Asesoría"]
 
-    with col2:
-        st.metric("Regiones detectadas", df["Indique su región"].nunique())
-
-    with col3:
-        st.metric("DEPROV detectadas", df["DEPROV"].nunique())
-
-    with col4:
-        st.metric("Modalidades", df["MODALIDAD"].nunique())
+    with col1: st.metric("Total registros", len(df))
+    with col2: st.metric("Regiones detectadas", df["Indique su región"].nunique())
+    with col3: st.metric("DEPROV detectadas", df["DEPROV"].nunique())
+    with col4: st.metric("Modalidades", df["MODALIDAD"].nunique())
 
     st.divider()
 
-    # -------------------------
-    # GENERAR INFORMES
-    # -------------------------
-    
+    # ---------------------------------------
+    # SELECCIÓN DEL MODO DE GENERACIÓN
+    # ---------------------------------------
     modo = st.selectbox(
         "Seleccione cómo desea generar los informes:",
         [
-            "1 informe por Región / Deprov / Modalidad",
-            "2 informe por Profesional"
+            "1 informe por Región / Deprov / Modalidad (Variante A)",
+            "1 informe por Profesional (Variante B)",
+            "Generación personalizada (Variante C)"
         ]
     )
 
+    # ---------------------------------------
+    # OPCIÓN PERSONALIZADA (VARIANTE C)
+    # ---------------------------------------
+    region_sel = deprov_sel = modalidad_sel = profesional_sel = None
 
+    if modo == "Generación personalizada (Variante C)":
+
+        regiones = sorted(df["Indique su región"].dropna().unique())
+        region_sel = st.selectbox("Seleccione la región:", regiones)
+
+        df_r = df[df["Indique su región"] == region_sel]
+
+        deprovs = sorted(df_r["Deprov"].dropna().unique())
+        deprov_sel = st.selectbox("Seleccione la DEPROV:", deprovs)
+
+        df_d = df_r[df_r["Deprov"] == deprov_sel]
+
+        modalidades = sorted(df_d["Tipo Asesoría"].dropna().unique())
+        modalidad_sel = st.selectbox("Seleccione la modalidad:", modalidades)
+
+        df_m = df_d[df_d["Tipo Asesoría"] == modalidad_sel]
+
+        profesionales = sorted(df_m["Nombre"].dropna().unique())
+        profesional_sel = st.selectbox("Seleccione el profesional:", profesionales)
+
+    # ---------------------------------------
+    # BOTÓN FINAL DE GENERAR
+    # ---------------------------------------
     if st.button("Generar Informes"):
 
         base_carpeta = "informes_generados"
 
-        # ✅ LIMPIAR CARPETA ANTERIOR
+        # ✅ limpiar carpeta previa
         if os.path.exists(base_carpeta):
             shutil.rmtree(base_carpeta)
         os.makedirs(base_carpeta, exist_ok=True)
@@ -135,14 +142,16 @@ if archivo:
         progreso = st.progress(0)
         estado = st.empty()
 
-        # ✅ Generar informes con estructura en subcarpetas
-        generar_informes(df, base_carpeta, progreso, estado, modo)
+        if modo == "Generación personalizada (Variante C)":
+            df_final = df_m[df_m["Nombre"] == profesional_sel]
+            generar_informes(df_final, base_carpeta, progreso, estado, "Variante B")
+        else:
+            generar_informes(df, base_carpeta, progreso, estado, modo)
 
-        # ✅ Crear nombre único para el ZIP
+        # ✅ generar zip
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         zip_nombre = f"informes_generados_{timestamp}.zip"
 
-        # ✅ Comprimir manteniendo estructura
         with zipfile.ZipFile(zip_nombre, "w") as zipf:
             for root, _, files in os.walk(base_carpeta):
                 for file in files:
