@@ -168,7 +168,7 @@ if modo == "Generación personalizada (Variante C)":
     if st.button("🧹 Limpiar filtros"):
         for key in ["region", "deprov", "modalidad", "profesional"]:
             st.session_state[key] = None
-        st.experimental_rerun()
+            st.rerun()
 
 
 # =====================================================
