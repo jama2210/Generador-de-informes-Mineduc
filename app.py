@@ -96,8 +96,8 @@ if archivo:
     modo = st.selectbox(
         "Seleccione cómo desea generar los informes:",
         [
-            "1 informe por Región / Deprov / Modalidad (Variante A)",
-            "1 informe por Profesional (Variante B)",
+            "1 Informe por Región / Deprov / Modalidad (Variante A)",
+            "1 Informe por Profesional (Variante B)",
             "Generación personalizada (Variante C)"
         ]
     )
@@ -107,25 +107,43 @@ if archivo:
     # ---------------------------------------
     region_sel = deprov_sel = modalidad_sel = profesional_sel = None
 
+    
     if modo == "Generación personalizada (Variante C)":
 
-        regiones = sorted(df["Indique su región"].dropna().unique())
-        region_sel = st.selectbox("Seleccione la región:", regiones)
+        st.subheader("Seleccione los criterios para el informe personalizado")
+
+        # -----------------------------
+        # FILA 1: REGIÓN / DEPROV
+        # -----------------------------
+        col1, col2 = st.columns(2)
+
+        with col1:
+            regiones = sorted(df["Indique su región"].dropna().unique())
+            region_sel = st.selectbox("Región", regiones)
 
         df_r = df[df["Indique su región"] == region_sel]
 
-        deprovs = sorted(df_r["Deprov"].dropna().unique())
-        deprov_sel = st.selectbox("Seleccione la DEPROV:", deprovs)
+        with col2:
+            deprovs = sorted(df_r["Deprov"].dropna().unique())
+            deprov_sel = st.selectbox("DEPROV", deprovs)
+
+        # -----------------------------
+        # FILA 2: MODALIDAD / PROFESIONAL
+        # -----------------------------
+        col3, col4 = st.columns(2)
 
         df_d = df_r[df_r["Deprov"] == deprov_sel]
 
-        modalidades = sorted(df_d["Tipo Asesoría"].dropna().unique())
-        modalidad_sel = st.selectbox("Seleccione la modalidad:", modalidades)
+        with col3:
+            modalidades = sorted(df_d["Tipo Asesoría"].dropna().unique())
+            modalidad_sel = st.selectbox("Modalidad", modalidades)
 
         df_m = df_d[df_d["Tipo Asesoría"] == modalidad_sel]
 
-        profesionales = sorted(df_m["Nombre"].dropna().unique())
-        profesional_sel = st.selectbox("Seleccione el profesional:", profesionales)
+        with col4:
+            profesionales = sorted(df_m["Nombre"].dropna().unique())
+            profesional_sel = st.selectbox("Profesional", profesionales)
+
 
     # ---------------------------------------
     # BOTÓN FINAL DE GENERAR
