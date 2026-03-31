@@ -164,11 +164,6 @@ if modo == "Generación personalizada (Variante C)":
         else:
             st.selectbox("Profesional", ["Seleccione modalidad primero"], disabled=True)
 
-    # LIMPIAR FILTROS
-    if st.button("🧹 Limpiar filtros"):
-        for key in ["region", "deprov", "modalidad", "profesional"]:
-            st.session_state[key] = None
-            st.rerun()
 
 
 # =====================================================
